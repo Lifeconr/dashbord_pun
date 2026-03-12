@@ -24,6 +24,80 @@ export const api = axios.create({
     }
 });
 
+let isRefreshing = false;
+let failedQueue: { resolve: (value?: unknown) => void, reject: (reason?: any) => void }[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+
+    failedQueue = [];
+};
+
+api.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    async (error) => {
+        const originalRequest = error.config;
+
+        // Catch 401 Unauthorized errors only, and prevent infinite loops with _retry flag
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            // If the endpoint that triggered 401 is /login or /refresh, let it fail
+            if (originalRequest.url === '/login' || originalRequest.url === '/refresh') {
+                return Promise.reject(error);
+            }
+
+            if (isRefreshing) {
+                // If currently refreshing, wait for it to finish and then retry the request
+                return new Promise(function (resolve, reject) {
+                    failedQueue.push({ resolve, reject });
+                }).then(() => {
+                    return api(originalRequest);
+                }).catch(err => {
+                    return Promise.reject(err);
+                });
+            }
+
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            try {
+                // Attempt to get a new token cookie from the backend
+                await api.post('/refresh');
+
+                // Success: Process queued requests
+                isRefreshing = false;
+                processQueue(null);
+
+                // Retry the original failed request
+                return api(originalRequest);
+
+            } catch (refreshError) {
+                // If the refresh token ALSO fails (e.g., completely expired), force logout
+                processQueue(refreshError, null);
+                
+                // ONLY redirect if we are NOT already on the login page!
+                if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+                    window.location.href = '/login';
+                }
+                
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
+
+
 /**
  * Authentication Services
  */
