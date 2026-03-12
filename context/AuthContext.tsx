@@ -23,40 +23,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const router = useRouter();
 
     useEffect(() => {
-        // Axios Interceptor for 401 handling (Expired Token Trap)
-        const interceptor = api.interceptors.response.use(
-            (response: AxiosResponse) => response,
-            (error: AxiosError) => {
-                if (error.response?.status === 401) {
-
-                    setUser(null);
-                    // Optionally clear cookies if the backend doesn't do it automatically
-                    // document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                    router.push("/login");
-                }
-                return Promise.reject(error);
-            }
-        );
-
         const initAuth = async () => {
             try {
                 const response = await getMe();
                 if (response.success) {
                     setUser(response.data);
                 }
-            } catch (error) {
-                console.error("Failed to fetch user session:", error);
+            } catch (error: any) {
+                // Ignore 401s here, api.ts interceptor handles the silent refresh or redirect
+                if (error?.response?.status !== 401) {
+                    console.error("Failed to fetch user session:", error);
+                }
             } finally {
                 setIsLoading(false);
             }
         };
 
         initAuth();
+    }, []);
 
-        return () => {
-            api.interceptors.response.eject(interceptor);
-        };
-    }, [router]);
 
 
     const login = async (data: LoginData) => {
