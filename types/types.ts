@@ -27,6 +27,7 @@ export interface User {
     email: string;
     team_id?: TeamId | null;
     roles?: string[];
+    permissions?: string[];
 }
 
 export interface LoginData {
