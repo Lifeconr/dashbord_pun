@@ -9,9 +9,7 @@ import {
     getRoles,
     getPermissions,
     assignRole,
-    unassignRole,
-    assignPermission,
-    unassignPermission
+    updateRole,
 } from "@/services/api";
 import { User, Team, Role, Permission } from "@/types/types";
 

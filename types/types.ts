@@ -39,7 +39,7 @@ export interface AuthResponse {
     token: string;
     user: User;
 }
-
+ 
 /**
 * Team Types
  */
@@ -49,6 +49,8 @@ export interface Team {
     description?: string;
     created_at?: string;
     updated_at?: string;
+    members?: User[];
+    members_count?: number;
 }
 
 export interface TeamData {

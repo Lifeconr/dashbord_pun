@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { usePathname } from "next/navigation";
 import { Bell, Search, Sun, Settings, ChevronRight } from "lucide-react";
@@ -10,9 +11,6 @@ export default function Header() {
     const pathname = usePathname();
 
     const pathSegments = pathname.split('/').filter(p => p && p !== 'admin');
-    const pageTitle = pathSegments.length > 0 
-        ? pathSegments[pathSegments.length - 1].replace(/-/g, ' ') 
-        : 'Dashboard';
 
     return (
         <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20 px-8 py-3.5 flex items-center justify-between">
@@ -30,10 +28,24 @@ export default function Header() {
                 </div>
 
                 {/* Breadcrumbs */}
-                <div className="flex items-center gap-2.5 text-xs">
-                    <span className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Building Your Application</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-                    <span className="text-slate-900 font-extrabold capitalize">{pageTitle}</span>
+                <div className="flex items-center gap-2 text-xs">
+                    <Link href="/admin/dashboard" className="text-slate-400 hover:text-primary font-bold uppercase tracking-widest text-[10px] transition-colors">Admin</Link>
+                    {pathSegments.map((segment, index) => {
+                        const href = `/admin/${pathSegments.slice(0, index + 1).join('/')}`;
+                        const isLast = index === pathSegments.length - 1;
+                        return (
+                            <React.Fragment key={href}>
+                                <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                                {isLast ? (
+                                    <span className="text-slate-900 font-extrabold capitalize">{segment.replace(/-/g, ' ')}</span>
+                                ) : (
+                                    <Link href={href} className="text-slate-400 hover:text-primary font-bold uppercase tracking-widest text-[10px] transition-colors">
+                                        {segment.replace(/-/g, ' ')}
+                                    </Link>
+                                )}
+                            </React.Fragment>
+                        );
+                    })}
                 </div>
             </div>
 

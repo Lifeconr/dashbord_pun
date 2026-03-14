@@ -67,9 +67,12 @@ api.interceptors.response.use(
             originalRequest._retry = true;
             isRefreshing = true;
 
+            console.log("Session expired. Attempting token refresh...");
+
             try {
                 // Attempt to get a new token cookie from the backend
                 await api.post('/refresh');
+                console.log("Token refreshed successfully. Retrying original request...");
 
                 // Success: Process queued requests
                 isRefreshing = false;
@@ -79,6 +82,11 @@ api.interceptors.response.use(
                 return api(originalRequest);
 
             } catch (refreshError) {
+                console.group("Authentication Error");
+                console.error("Token refresh failed. Redirecting to login.");
+                console.error(refreshError);
+                console.groupEnd();
+                
                 // If the refresh token ALSO fails (e.g., completely expired), force logout
                 processQueue(refreshError, null);
                 
@@ -116,7 +124,7 @@ export const logout = async (): Promise<ApiResponse<null>> => {
     return response.data;
 };
 
-/**
+/** 
  * Teams Services (mapped to apiResource)
  */
 export const getTeams = async (): Promise<ApiResponse<Team[]>> => {
@@ -195,27 +203,32 @@ export const getRoles = async (): Promise<ApiResponse<Role[]>> => {
     return response.data;
 }
 
-export const assignRole = async (userId: UserId, roleId: RoleId): Promise<ApiResponse<null>> => {
-    const response = await api.post(`/users/${userId}/roles`, { role_id: roleId });
+export const getRole = async (id: RoleId): Promise<ApiResponse<Role>> => {
+    const response = await api.get(`/roles/${id}`);
     return response.data;
 }
 
-export const unassignRole = async (userId: UserId, roleId: RoleId): Promise<ApiResponse<null>> => {
-    const response = await api.delete(`/users/${userId}/roles/${roleId}`);
+export const createRole = async (data: { name: string; permissions: string[] | number[] }): Promise<ApiResponse<Role>> => {
+    const response = await api.post(`/roles`, data);
+    return response.data;
+}
+
+export const updateRole = async (id: RoleId, data: { name: string; permissions: string[] | number[] }): Promise<ApiResponse<Role>> => {
+    const response = await api.put(`/roles/${id}`, data);
+    return response.data;
+}
+
+export const deleteRole = async (id: RoleId): Promise<ApiResponse<null>> => {
+    const response = await api.delete(`/roles/${id}`);
+    return response.data;
+}
+
+export const assignRole = async (userId: UserId, role: string | number): Promise<ApiResponse<null>> => {
+    const response = await api.post(`/users/${userId}/role`, { role });
     return response.data;
 }
 
 export const getPermissions = async (): Promise<ApiResponse<Permission[]>> => {
     const response = await api.get(`/permissions`);
-    return response.data;
-}
-
-export const assignPermission = async (userId: UserId, permissionId: PermissionId): Promise<ApiResponse<null>> => {
-    const response = await api.post(`/users/${userId}/permissions`, { permission_id: permissionId });
-    return response.data;
-}
-
-export const unassignPermission = async (userId: UserId, permissionId: PermissionId): Promise<ApiResponse<null>> => {
-    const response = await api.delete(`/users/${userId}/permissions/${permissionId}`);
     return response.data;
 }

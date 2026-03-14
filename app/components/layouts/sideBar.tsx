@@ -11,7 +11,8 @@ import {
     CalendarCheck2, 
     MailOpen, 
     LogOut,
-    ChevronRight
+    ChevronRight,
+    ShieldCheck
 } from "lucide-react";
 
 export default function SideBar() {
@@ -21,6 +22,7 @@ export default function SideBar() {
     const allLinks = [
         { name: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
         { name: "Employees", href: "/admin/users", icon: Users },
+        { name: "Roles", href: "/admin/roles", icon: ShieldCheck },
         { name: "Teams", href: "/admin/teams", icon: Building2 },
         { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck2 },
         { name: "Leave Requests", href: "/admin/leaves", icon: MailOpen },
